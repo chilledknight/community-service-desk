@@ -96,8 +96,9 @@ def index(request: Request, db: Session = Depends(get_db)):
 @web_router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, error: str | None = None):
     return templates.TemplateResponse(
-        "login.html",
-        {"request": request, "error": error, "user": None},
+        request=request,
+        name="login.html",
+        context={"error": error, "user": None},
     )
 
 
@@ -115,9 +116,9 @@ def login_post(
     )
     if not result:
         return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
+            request=request,
+            name="login.html",
+            context={
                 "error": "Invalid email, password, or organization. Please try again.",
                 "user": None,
             },
@@ -178,9 +179,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     )
 
     return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
+        request=request,
+        name="dashboard.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
@@ -226,9 +227,9 @@ def ticket_list(
     queues = db.query(Queue).filter(Queue.organization_id == org.id, Queue.active.is_(True)).all()
 
     return templates.TemplateResponse(
-        "ticket_list.html",
-        {
-            "request": request,
+        request=request,
+        name="ticket_list.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
@@ -252,9 +253,9 @@ def ticket_create_page(request: Request, db: Session = Depends(get_db)):
 
     queues = db.query(Queue).filter(Queue.organization_id == org.id, Queue.active.is_(True)).all()
     return templates.TemplateResponse(
-        "ticket_create.html",
-        {
-            "request": request,
+        request=request,
+        name="ticket_create.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
@@ -348,9 +349,9 @@ def ticket_detail_page(
         )
 
     return templates.TemplateResponse(
-        "ticket_detail.html",
-        {
-            "request": request,
+        request=request,
+        name="ticket_detail.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
@@ -459,9 +460,9 @@ def ticket_resolve_page(ticket_id: str, request: Request, db: Session = Depends(
 
     AuthorizationService.assert_ticket_modification(user, ticket)
     return templates.TemplateResponse(
-        "ticket_resolve.html",
-        {
-            "request": request,
+        request=request,
+        name="ticket_resolve.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
@@ -570,9 +571,9 @@ def search_page(
         )
 
     return templates.TemplateResponse(
-        "search.html",
-        {
-            "request": request,
+        request=request,
+        name="search.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
@@ -618,9 +619,9 @@ def knowledge_page(
         )
 
     return templates.TemplateResponse(
-        "knowledge.html",
-        {
-            "request": request,
+        request=request,
+        name="knowledge.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
@@ -655,9 +656,9 @@ def admin_page(
     )
 
     return templates.TemplateResponse(
-        "admin.html",
-        {
-            "request": request,
+        request=request,
+        name="admin.html",
+        context={
             "user": user,
             "org": org,
             "role": role,
