@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Community Service Desk{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header class="app-header" role="banner">
+    <div class="header-container">
+      <a href="/dashboard" class="brand-link" aria-label="Community Service Desk Home">
+        <span aria-hidden="true">🛡️</span>
+        <span>Community Service Desk</span>
+        <span class="brand-badge">v0.1.0</span>
+      </a>
+
+      {% if user %}
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="/dashboard" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+          <li><a href="/tickets" class="nav-link {% if active_page == 'tickets' %}active{% endif %}">Tickets</a></li>
+          <li><a href="/tickets/new" class="nav-link {% if active_page == 'create_ticket' %}active{% endif %}">+ New Ticket</a></li>
+          <li><a href="/search" class="nav-link {% if active_page == 'search' %}active{% endif %}">Search</a></li>
+          {% if is_staff %}
+          <li><a href="/knowledge" class="nav-link {% if active_page == 'knowledge' %}active{% endif %}">Knowledge Base</a></li>
+          {% endif %}
+          {% if is_admin %}
+          <li><a href="/admin" class="nav-link {% if active_page == 'admin' %}active{% endif %}">Admin</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+
+      <div class="user-controls">
+        <span class="role-tag" title="Your role in this organization">{{ role or 'Requester' }}</span>
+        <span><strong>{{ user.display_name }}</strong></span>
+        <a href="/logout" class="btn btn-secondary btn-sm" role="button">Sign Out</a>
+      </div>
+      {% else %}
+      <div class="user-controls">
+        <a href="/login" class="btn btn-primary btn-sm" role="button">Sign In</a>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <main id="main-content" class="main-content" role="main">
+    {% if error %}
+    <div class="alert alert-error" role="alert">
+      <span>{{ error }}</span>
+      <button class="alert-dismiss btn-sm btn-secondary" aria-label="Dismiss alert">&times;</button>
+    </div>
+    {% endif %}
+
+    {% if message %}
+    <div class="alert alert-success" role="status">
+      <span>{{ message }}</span>
+      <button class="alert-dismiss btn-sm btn-secondary" aria-label="Dismiss alert">&times;</button>
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="app-footer" role="contentinfo">
+    <p>Community Service Desk &bull; Open-Source Ticketing under <strong>AGPL-3.0</strong> &bull; Preserving community resolution knowledge.</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

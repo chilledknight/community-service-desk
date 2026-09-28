@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Resolve {{ ticket.ticket_number }} - Community Service Desk{% endblock %}
+
+{% block content %}
+<div style="max-width: 760px; margin: 0 auto;">
+  <div style="margin-bottom: 20px;">
+    <a href="/tickets/{{ ticket.id }}" style="color: var(--primary); text-decoration: none; font-size: 0.9rem;">&larr; Back to Ticket {{ ticket.ticket_number }}</a>
+    <h1 style="margin-top: 8px;">Resolve Ticket: {{ ticket.ticket_number }}</h1>
+    <p style="color: var(--text-muted);">{{ ticket.title }}</p>
+  </div>
+
+  <div class="card">
+    <div style="background: var(--info-bg); border-left: 4px solid var(--info); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 24px; font-size: 0.9rem;">
+      <strong>Why structured resolution?</strong> Recording exact root causes and verified steps builds an institutional knowledge base. When preserved, this knowledge will empower future support search and AI-assisted suggested answers.
+    </div>
+
+    <form method="POST" action="/tickets/{{ ticket.id }}/resolve">
+      <div class="form-group">
+        <label for="summary">Resolution Summary *</label>
+        <input type="text" id="summary" name="summary" required minlength="5" placeholder="Concise statement of what fixed the problem (e.g. Reinstalled managed printer mapping and refreshed policy)">
+        <div class="form-hint">A clear one-to-two sentence explanation of the solution.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="root_cause">Root Cause (Optional)</label>
+        <textarea id="root_cause" name="root_cause" rows="3" placeholder="Underlying cause (e.g. Managed queue mapping was removed during automated GPO refresh)"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="resolution_steps">Resolution Steps *</label>
+        <textarea id="resolution_steps" name="resolution_steps" rows="5" required minlength="5" placeholder="1. Opened print management console&#10;2. Restored local connection to \\printersrv\room204-color&#10;3. Executed gpupdate /force on client workstation"></textarea>
+        <div class="form-hint">Step-by-step instructions so another agent or future AI helper can reproduce the fix.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="verification">Verification Method *</label>
+        <select id="verification" name="verification" required>
+          <option value="requester_confirmed" selected>Requester Confirmed (Requester verified the fix worked)</option>
+          <option value="admin_verified">Administrator Verified (Agent tested directly on system)</option>
+          <option value="automated_test_passed">Automated Test Passed (Diagnostic check succeeded)</option>
+          <option value="no_longer_reproducible">Issue No Longer Reproducible</option>
+          <option value="workaround_confirmed">Workaround Confirmed</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-top: 20px; background: var(--bg-surface-alt); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin-bottom: 0;">
+          <input type="checkbox" id="knowledge_useful" name="knowledge_useful" value="true" checked style="margin-top: 4px; width: 18px; height: 18px;">
+          <div>
+            <strong>Preserve as Reusable Knowledge</strong>
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;">
+              Marking this allows future agents (and the future AI retrieval assistant) to reference this resolution when similar tickets arrive in this organization. It does not publish anything publicly outside this tenant.
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <a href="/tickets/{{ ticket.id }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-success">&check; Save Resolution & Mark Resolved</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

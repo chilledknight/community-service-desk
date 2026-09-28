@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Community Service Desk{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+  <div>
+    <h1>Support Dashboard</h1>
+    <p style="color: var(--text-muted); margin-bottom: 0;">Workspace: <strong>{{ org.name }}</strong> ({{ org.slug }})</p>
+  </div>
+  <div>
+    <a href="/tickets/new" class="btn btn-primary">+ Create New Ticket</a>
+  </div>
+</div>
+
+{% if is_staff %}
+<section aria-labelledby="stats-heading">
+  <h2 id="stats-heading" class="visually-hidden" style="display:none;">Ticket Statistics</h2>
+  <div class="stats-grid">
+    <a href="/tickets?status=NEW" class="stat-card">
+      <span class="stat-label">New</span>
+      <span class="stat-value" style="color: #4338ca;">{{ stats.new_count }}</span>
+    </a>
+    <a href="/tickets?status=OPEN" class="stat-card">
+      <span class="stat-label">Open</span>
+      <span class="stat-value" style="color: #1e40af;">{{ stats.open_count }}</span>
+    </a>
+    <a href="/tickets?status=IN_PROGRESS" class="stat-card">
+      <span class="stat-label">In Progress</span>
+      <span class="stat-value" style="color: #b45309;">{{ stats.in_progress_count }}</span>
+    </a>
+    <a href="/tickets?status=WAITING_ON_REQUESTER" class="stat-card">
+      <span class="stat-label">Waiting</span>
+      <span class="stat-value" style="color: #7e22ce;">{{ stats.waiting_count }}</span>
+    </a>
+    <a href="/tickets?unassigned=true" class="stat-card">
+      <span class="stat-label">Unassigned</span>
+      <span class="stat-value" style="color: #be123c;">{{ stats.unassigned_count }}</span>
+    </a>
+    <a href="/tickets?status=RESOLVED" class="stat-card">
+      <span class="stat-label">Resolved (7d)</span>
+      <span class="stat-value" style="color: #15803d;">{{ stats.resolved_recently_count }}</span>
+    </a>
+  </div>
+</section>
+{% endif %}
+
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h2>{% if is_staff %}Recent Organization Tickets{% else %}My Support Requests{% endif %}</h2>
+    <a href="/tickets" class="btn btn-secondary btn-sm">View All Tickets &rarr;</a>
+  </div>
+
+  {% if tickets %}
+  <div class="table-responsive">
+    <table class="data-table" aria-label="Recent tickets">
+      <thead>
+        <tr>
+          <th>Number</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Requester</th>
+          {% if is_staff %}<th>Assigned To</th>{% endif %}
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr>
+          <td><a href="/tickets/{{ t.id }}" style="font-weight: 700; color: var(--primary);">{{ t.ticket_number }}</a></td>
+          <td><a href="/tickets/{{ t.id }}" style="color: inherit; text-decoration: none;">{{ t.title }}</a></td>
+          <td><span class="badge badge-{{ t.status.lower() }}">{{ t.status.replace('_', ' ') }}</span></td>
+          <td><span class="priority-{{ t.priority.lower() }}">{{ t.priority }}</span></td>
+          <td>{{ t.requester.name }}</td>
+          {% if is_staff %}
+          <td>{{ t.assigned_agent.display_name if t.assigned_agent else '<em>Unassigned</em>'|safe }}</td>
+          {% endif %}
+          <td style="color: var(--text-muted); font-size: 0.85rem;">{{ t.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color: var(--text-muted); text-align: center; padding: 24px 0;">No tickets found. Click <strong>+ Create New Ticket</strong> to submit a request.</p>
+  {% endif %}
+</div>
+{% endblock %}

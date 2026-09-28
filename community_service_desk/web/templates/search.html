@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Search Tickets - Community Service Desk{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+  <h1>Search & Filter Tickets</h1>
+  <p style="color: var(--text-muted);">Search across ticket numbers, titles, descriptions, and resolution records within <strong>{{ org.name }}</strong>.</p>
+</div>
+
+<div class="card">
+  <form method="GET" action="/search">
+    <div class="form-group">
+      <label for="search-query">Search Keywords</label>
+      <input type="text" id="search-query" name="q" value="{{ query_str or '' }}" placeholder="Search by ticket # (CSD-000001), keywords, error codes, symptoms, or resolution text..." autofocus>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="">All Statuses</option>
+          <option value="NEW" {% if status == 'NEW' %}selected{% endif %}>NEW</option>
+          <option value="OPEN" {% if status == 'OPEN' %}selected{% endif %}>OPEN</option>
+          <option value="IN_PROGRESS" {% if status == 'IN_PROGRESS' %}selected{% endif %}>IN PROGRESS</option>
+          <option value="WAITING_ON_REQUESTER" {% if status == 'WAITING_ON_REQUESTER' %}selected{% endif %}>WAITING ON REQUESTER</option>
+          <option value="WAITING_INTERNAL" {% if status == 'WAITING_INTERNAL' %}selected{% endif %}>WAITING INTERNAL</option>
+          <option value="RESOLVED" {% if status == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
+          <option value="CLOSED" {% if status == 'CLOSED' %}selected{% endif %}>CLOSED</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="priority">Priority</label>
+        <select id="priority" name="priority">
+          <option value="">All Priorities</option>
+          <option value="LOW" {% if priority == 'LOW' %}selected{% endif %}>LOW</option>
+          <option value="NORMAL" {% if priority == 'NORMAL' %}selected{% endif %}>NORMAL</option>
+          <option value="HIGH" {% if priority == 'HIGH' %}selected{% endif %}>HIGH</option>
+          <option value="URGENT" {% if priority == 'URGENT' %}selected{% endif %}>URGENT</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="category">Category</label>
+        <input type="text" id="category" name="category" value="{{ category or '' }}" placeholder="e.g. Printing">
+      </div>
+
+      <div class="form-group">
+        <label for="tag">Tag</label>
+        <input type="text" id="tag" name="tag" value="{{ tag or '' }}" placeholder="e.g. windows">
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+      <a href="/search" class="btn btn-secondary">Clear</a>
+      <button type="submit" class="btn btn-primary">Search Tickets</button>
+    </div>
+  </form>
+</div>
+
+{% if searched %}
+<div class="card">
+  <h2>Search Results ({{ results|length }})</h2>
+  {% if results %}
+  <div class="table-responsive">
+    <table class="data-table" aria-label="Search results">
+      <thead>
+        <tr>
+          <th>Number</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Requester</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in results %}
+        <tr>
+          <td><a href="/tickets/{{ t.id }}" style="font-weight: 700; color: var(--primary);">{{ t.ticket_number }}</a></td>
+          <td>
+            <a href="/tickets/{{ t.id }}" style="color: inherit; text-decoration: none; font-weight: 500;">{{ t.title }}</a>
+            {% if t.resolution %}
+            <div style="font-size: 0.8rem; color: var(--success); margin-top: 2px;">
+              &check; <strong>Resolution:</strong> {{ t.resolution.summary }}
+            </div>
+            {% endif %}
+          </td>
+          <td><span class="badge badge-{{ t.status.lower() }}">{{ t.status.replace('_', ' ') }}</span></td>
+          <td><span class="priority-{{ t.priority.lower() }}">{{ t.priority }}</span></td>
+          <td>{{ t.requester.name }}</td>
+          <td style="color: var(--text-muted); font-size: 0.85rem;">{{ t.created_at.strftime('%Y-%m-%d') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color: var(--text-muted); padding: 20px 0; text-align: center;">No tickets matched your query.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

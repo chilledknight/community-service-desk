@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ticket.ticket_number }} - {{ ticket.title }} - Community Service Desk{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+        <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">{{ ticket.ticket_number }}</span>
+        <span class="badge badge-{{ ticket.status.lower() }}">{{ ticket.status.replace('_', ' ') }}</span>
+        <span class="priority-{{ ticket.priority.lower() }} badge" style="border: 1px solid currentColor;">{{ ticket.priority }}</span>
+        {% if ticket.category %}
+        <span class="tag-badge">{{ ticket.category }}</span>
+        {% endif %}
+      </div>
+      <h1 style="font-size: 1.5rem; margin-bottom: 4px;">{{ ticket.title }}</h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Opened by <strong>{{ ticket.requester.name }}</strong> ({{ ticket.requester.email }}) &bull; {{ ticket.created_at.strftime('%b %d, %Y at %H:%M') }}
+      </p>
+    </div>
+
+    {% if is_staff and ticket.status not in ('RESOLVED', 'CLOSED') %}
+    <div>
+      <a href="/tickets/{{ ticket.id }}/resolve" class="btn btn-success">&check; Resolve Ticket</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="ticket-layout">
+  <!-- Left Main Column: Conversation & Content -->
+  <div>
+    <!-- Original Description -->
+    <div class="card" style="margin-bottom: 20px;">
+      <h2 style="font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Issue Description</h2>
+      <div style="white-space: pre-wrap; line-height: 1.6;">{{ ticket.description }}</div>
+      
+      {% if ticket.tags %}
+      <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+        <strong style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Tags:</strong>
+        {% for tag in ticket.tags %}
+        <span class="tag-badge">{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Structured Resolution Display if Resolved -->
+    {% if ticket.resolution %}
+    <div class="card" style="border-left: 5px solid var(--success); background: #f0fdf4; margin-bottom: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+        <h2 style="font-size: 1.1rem; color: var(--success); margin-bottom: 0;">&check; Official Ticket Resolution</h2>
+        {% if ticket.resolution.knowledge_useful %}
+        <span class="badge" style="background: #bbf7d0; color: #14532d;">Preserved for Knowledge Base</span>
+        {% endif %}
+      </div>
+      <div style="margin-bottom: 10px;">
+        <strong>Summary:</strong>
+        <p style="margin-top: 4px; line-height: 1.5;">{{ ticket.resolution.summary }}</p>
+      </div>
+      {% if ticket.resolution.root_cause %}
+      <div style="margin-bottom: 10px;">
+        <strong>Root Cause:</strong>
+        <p style="margin-top: 4px; line-height: 1.5;">{{ ticket.resolution.root_cause }}</p>
+      </div>
+      {% endif %}
+      <div style="margin-bottom: 10px;">
+        <strong>Resolution Steps:</strong>
+        <p style="margin-top: 4px; line-height: 1.5; white-space: pre-wrap;">{{ ticket.resolution.resolution_steps }}</p>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid #bbf7d0; padding-top: 8px;">
+        Confirmed via: <strong>{{ ticket.resolution.verification.replace('_', ' ').title() }}</strong> &bull; Resolved on {{ ticket.resolution.created_at.strftime('%b %d, %Y') }}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Conversation Stream -->
+    <section aria-label="Ticket Conversation">
+      <h2 style="font-size: 1.2rem; margin-bottom: 14px;">Conversation Timeline</h2>
+      <div class="conversation-stream">
+        {% if conversation_entries %}
+          {% for entry in conversation_entries %}
+            {% if entry.entry_type == 'INTERNAL_NOTE' %}
+              <!-- VISUALLY UNMISTAKABLE INTERNAL NOTE -->
+              <div class="message-card internal-note" role="region" aria-label="Internal note">
+                <div class="message-header">
+                  <span class="internal-note-badge">
+                    <span aria-hidden="true">🔒</span> INTERNAL NOTE &bull; STAFF ONLY
+                  </span>
+                  <span><strong>{{ entry.author_name }}</strong> (Staff) &bull; {{ entry.created_at.strftime('%b %d, %Y at %H:%M') }}</span>
+                </div>
+                <div class="message-body">{{ entry.body }}</div>
+              </div>
+            {% else %}
+              <!-- PUBLIC REPLY -->
+              <div class="message-card">
+                <div class="message-header">
+                  <span class="message-author">
+                    {{ entry.author_name }}
+                    {% if entry.author_type == 'agent' %}<span class="badge badge-open" style="font-size: 0.65rem; margin-left: 4px;">Staff</span>{% endif %}
+                  </span>
+                  <span>{{ entry.created_at.strftime('%b %d, %Y at %H:%M') }}</span>
+                </div>
+                <div class="message-body">{{ entry.body }}</div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <p style="color: var(--text-muted); font-style: italic;">No replies yet.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Post Message Card -->
+    {% if ticket.status != 'CLOSED' %}
+    <div class="card" style="margin-top: 24px;">
+      <h3 style="margin-bottom: 14px;">Add to Conversation</h3>
+
+      {% if is_staff %}
+      <!-- Agent mode: Mode Selector -->
+      <div style="display: flex; gap: 8px; margin-bottom: 14px;" role="tablist" aria-label="Reply Type">
+        <button type="button" id="tab-public-reply" class="btn btn-primary btn-sm active" role="tab" aria-selected="true">Public Reply (Visible to Requester)</button>
+        <button type="button" id="tab-internal-note" class="btn btn-secondary btn-sm" role="tab" aria-selected="false">Internal Note (Staff Only)</button>
+      </div>
+      <p id="note-help-text" style="display: none; font-size: 0.85rem; color: #b45309; background: #fffbeb; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid #fcd34d;">
+        🔒 <strong>Internal Note:</strong> This note will be recorded for agents only and is completely hidden from the requester.
+      </p>
+      {% endif %}
+
+      <form method="POST" action="/tickets/{{ ticket.id }}/reply">
+        <input type="hidden" id="input-entry-type" name="entry_type" value="REQUESTER_VISIBLE_REPLY">
+        <div class="form-group">
+          <label for="reply-body" class="visually-hidden" style="display:none;">Message</label>
+          <textarea id="reply-body" name="body" rows="4" required placeholder="Type your response or troubleshooting note..."></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button type="submit" id="btn-submit-reply" class="btn btn-primary">Send Public Reply</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- Attachments Section -->
+    <div class="card" style="margin-top: 20px;">
+      <h3 style="margin-bottom: 12px;">Attachments ({{ ticket.attachments|length }})</h3>
+      {% if ticket.attachments %}
+      <ul style="list-style: none; margin-bottom: 16px;">
+        {% for att in ticket.attachments %}
+        <li style="padding: 8px 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span aria-hidden="true">📎</span>
+            <a href="/attachments/{{ att.id }}/download" style="font-weight: 600; color: var(--primary);">{{ att.filename }}</a>
+            <span style="color: var(--text-muted); font-size: 0.8rem; margin-left: 6px;">({{ (att.size / 1024)|round(1) }} KB)</span>
+          </div>
+          <a href="/attachments/{{ att.id }}/download" class="btn btn-secondary btn-sm" download>Download</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 14px;">No files attached to this ticket.</p>
+      {% endif %}
+
+      <!-- Upload Form -->
+      <form method="POST" action="/tickets/{{ ticket.id }}/attachments" enctype="multipart/form-data" style="margin-top: 10px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <input type="file" name="file" required style="max-width: 320px; font-size: 0.9rem;">
+          <button type="submit" class="btn btn-secondary btn-sm">Upload File</button>
+        </div>
+        <div class="form-hint">Max file size: 10 MB. Executable attachments are blocked.</div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Sidebar: Properties & Controls -->
+  <div>
+    <!-- Ticket Properties Box -->
+    <div class="card">
+      <h3 style="font-size: 1rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 14px;">Ticket Attributes</h3>
+
+      <div class="sidebar-section">
+        <h4>Status</h4>
+        <span class="badge badge-{{ ticket.status.lower() }}">{{ ticket.status.replace('_', ' ') }}</span>
+        {% if is_staff %}
+        <form method="POST" action="/tickets/{{ ticket.id }}/status" style="margin-top: 8px;">
+          <select name="status" onchange="this.form.submit()" style="font-size: 0.85rem; padding: 4px 8px;">
+            <option value="NEW" {% if ticket.status == 'NEW' %}selected{% endif %}>NEW</option>
+            <option value="OPEN" {% if ticket.status == 'OPEN' %}selected{% endif %}>OPEN</option>
+            <option value="IN_PROGRESS" {% if ticket.status == 'IN_PROGRESS' %}selected{% endif %}>IN PROGRESS</option>
+            <option value="WAITING_ON_REQUESTER" {% if ticket.status == 'WAITING_ON_REQUESTER' %}selected{% endif %}>WAITING ON REQUESTER</option>
+            <option value="WAITING_INTERNAL" {% if ticket.status == 'WAITING_INTERNAL' %}selected{% endif %}>WAITING INTERNAL</option>
+            <option value="RESOLVED" {% if ticket.status == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
+            <option value="CLOSED" {% if ticket.status == 'CLOSED' %}selected{% endif %}>CLOSED</option>
+          </select>
+        </form>
+        {% endif %}
+      </div>
+
+      <div class="sidebar-section">
+        <h4>Priority</h4>
+        <span class="priority-{{ ticket.priority.lower() }} badge" style="border: 1px solid currentColor;">{{ ticket.priority }}</span>
+      </div>
+
+      <div class="sidebar-section">
+        <h4>Assigned Agent</h4>
+        {% if is_staff %}
+        <form method="POST" action="/tickets/{{ ticket.id }}/assign">
+          <select name="assigned_agent_id" onchange="this.form.submit()" style="font-size: 0.85rem; padding: 4px 8px;">
+            <option value="">Unassigned</option>
+            {% for agent in staff_members %}
+            <option value="{{ agent.id }}" {% if ticket.assigned_agent_id == agent.id %}selected{% endif %}>{{ agent.display_name }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        {% else %}
+        <span>{{ ticket.assigned_agent.display_name if ticket.assigned_agent else 'Unassigned' }}</span>
+        {% endif %}
+      </div>
+
+      <div class="sidebar-section">
+        <h4>Queue</h4>
+        <span>{{ ticket.queue.name if ticket.queue else 'General Support' }}</span>
+      </div>
+
+      <div class="sidebar-section">
+        <h4>Requester</h4>
+        <div><strong>{{ ticket.requester.name }}</strong></div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">{{ ticket.requester.email }}</div>
+        {% if ticket.requester.phone %}
+        <div style="font-size: 0.85rem; color: var(--text-muted);">{{ ticket.requester.phone }}</div>
+        {% endif %}
+      </div>
+
+      <div class="sidebar-section" style="margin-bottom: 0;">
+        <h4>Timeline</h4>
+        <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+          <div>Created: {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          {% if ticket.first_response_at %}
+          <div>First Response: {{ ticket.first_response_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          {% endif %}
+          {% if ticket.resolved_at %}
+          <div>Resolved: {{ ticket.resolved_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          {% endif %}
+          {% if ticket.closed_at %}
+          <div>Closed: {{ ticket.closed_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit Event History (Staff Only) -->
+    {% if is_staff and history_entries %}
+    <div class="card" style="margin-top: 20px;">
+      <h3 style="font-size: 1rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 12px;">Audit History</h3>
+      <ol style="list-style: none; font-size: 0.8rem; line-height: 1.4;">
+        {% for h in history_entries %}
+        <li style="padding: 6px 0; border-bottom: 1px solid var(--border-color);">
+          <div><strong>{{ h.actor_name }}</strong>: {{ h.event_type.replace('_', ' ') }}</div>
+          {% if h.old_value or h.new_value %}
+          <div style="color: var(--text-muted);">{{ h.old_value or 'None' }} &rarr; {{ h.new_value or 'None' }}</div>
+          {% endif %}
+          <div style="color: var(--text-muted); font-size: 0.75rem;">{{ h.created_at.strftime('%m/%d %H:%M') }}</div>
+        </li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

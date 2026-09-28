@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: csd_db
+      POSTGRES_USER: csd_user
+      POSTGRES_PASSWORD: csd_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - csd_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U csd_user -d csd_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      CSD_ENVIRONMENT: development
+      CSD_DEBUG: "false"
+      CSD_DATABASE_URL: postgresql+psycopg://csd_user:csd_password@db:5432/csd_db
+      CSD_SECRET_KEY: dev-insecure-secret-key-change-in-production-32charsmin!
+      CSD_STORAGE_BACKEND: local
+      CSD_STORAGE_LOCAL_DIR: /app/uploads
+      CSD_HOST: 0.0.0.0
+      CSD_PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - csd_uploads:/app/uploads
+
+volumes:
+  csd_pgdata:
+  csd_uploads:

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Community Service Desk{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+  <h1>Organization Administration</h1>
+  <p style="color: var(--text-muted);">Manage workspace settings, team members, and queues for <strong>{{ org.name }}</strong>.</p>
+</div>
+
+<div class="card">
+  <h2>Workspace Details</h2>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 14px;">
+    <div>
+      <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Organization Name</span>
+      <div style="font-size: 1.1rem; font-weight: 700;">{{ org.name }}</div>
+    </div>
+    <div>
+      <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Workspace Slug</span>
+      <div style="font-family: var(--font-mono); font-size: 1rem;">{{ org.slug }}</div>
+    </div>
+    <div>
+      <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Status</span>
+      <div><span class="badge badge-resolved">{{ org.status }}</span></div>
+    </div>
+    <div>
+      <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Created</span>
+      <div style="font-size: 0.95rem;">{{ org.created_at.strftime('%Y-%m-%d') }}</div>
+    </div>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px;">
+  <!-- Left: Team Members -->
+  <div>
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2>Team Members ({{ members|length }})</h2>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table" aria-label="Organization members">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in members %}
+            <tr>
+              <td><strong>{{ m.user.display_name }}</strong></td>
+              <td>{{ m.user.email }}</td>
+              <td><span class="role-tag">{{ m.role }}</span></td>
+              <td>
+                {% if m.user.active %}
+                <span class="badge badge-resolved">Active</span>
+                {% else %}
+                <span class="badge badge-closed">Inactive</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Queues -->
+    <div class="card">
+      <h2>Support Queues ({{ queues|length }})</h2>
+      <div class="table-responsive" style="margin-top: 14px;">
+        <table class="data-table" aria-label="Support queues">
+          <thead>
+            <tr>
+              <th>Queue Name</th>
+              <th>Description</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for q in queues %}
+            <tr>
+              <td><strong>{{ q.name }}</strong></td>
+              <td style="color: var(--text-muted);">{{ q.description or '—' }}</td>
+              <td>
+                {% if q.active %}
+                <span class="badge badge-resolved">Active</span>
+                {% else %}
+                <span class="badge badge-closed">Inactive</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Add Forms -->
+  <div>
+    <!-- Add Member Form -->
+    <div class="card">
+      <h3>Add Organization Member</h3>
+      <form method="POST" action="/admin/members">
+        <div class="form-group">
+          <label for="mem-email">Email Address *</label>
+          <input type="email" id="mem-email" name="email" required placeholder="user@example.org">
+        </div>
+        <div class="form-group">
+          <label for="mem-name">Display Name *</label>
+          <input type="text" id="mem-name" name="display_name" required placeholder="Full Name">
+        </div>
+        <div class="form-group">
+          <label for="mem-password">Initial Password *</label>
+          <input type="password" id="mem-password" name="password" required minlength="8" placeholder="At least 8 characters">
+        </div>
+        <div class="form-group">
+          <label for="mem-role">Organization Role</label>
+          <select id="mem-role" name="role">
+            <option value="agent" selected>Support Agent</option>
+            <option value="organization_admin">Organization Administrator</option>
+            <option value="requester">Requester Only</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Add Member</button>
+      </form>
+    </div>
+
+    <!-- Create Queue Form -->
+    <div class="card">
+      <h3>Create Support Queue</h3>
+      <form method="POST" action="/admin/queues">
+        <div class="form-group">
+          <label for="q-name">Queue Name *</label>
+          <input type="text" id="q-name" name="name" required placeholder="e.g. Facilities, Hardware">
+        </div>
+        <div class="form-group">
+          <label for="q-desc">Description</label>
+          <input type="text" id="q-desc" name="description" placeholder="Brief scope of this queue">
+        </div>
+        <button type="submit" class="btn btn-secondary" style="width: 100%;">Create Queue</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

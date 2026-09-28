@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Knowledge Base - Community Service Desk{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1>Institutional Knowledge Base</h1>
+      <p style="color: var(--text-muted); max-width: 720px;">
+        Curated historical ticket resolutions marked as useful for solving future tickets in <strong>{{ org.name }}</strong>.
+      </p>
+    </div>
+    <div style="background: var(--primary-light); padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--primary); font-weight: 600;">
+      🤖 Future AI Retrieval Layer Ready
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <form method="GET" action="/knowledge">
+    <div class="form-group">
+      <label for="knowledge-query">Describe Problem or Enter Keywords</label>
+      <input type="text" id="knowledge-query" name="q" value="{{ query_str or '' }}" placeholder="e.g. Printer disappeared after workstation update or password reset loop" autofocus required minlength="2">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="category">Category Filter</label>
+        <input type="text" id="category" name="category" value="{{ category or '' }}" placeholder="e.g. Printing, Network">
+      </div>
+      <div class="form-group">
+        <label for="tag">Tag Filter</label>
+        <input type="text" id="tag" name="tag" value="{{ tag or '' }}" placeholder="e.g. windows, gpo">
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+      <a href="/knowledge" class="btn btn-secondary">Reset</a>
+      <button type="submit" class="btn btn-primary">Find Prior Solutions</button>
+    </div>
+  </form>
+</div>
+
+{% if searched %}
+<section aria-label="Knowledge Evidence Results">
+  <h2>Relevant Resolution Records ({{ evidence|length }})</h2>
+  
+  {% if evidence %}
+    {% for item in evidence %}
+    <article class="knowledge-evidence-card">
+      <div class="knowledge-score" title="Relevance match score">Score: {{ item.relevance_score }}</div>
+      <div style="margin-bottom: 8px;">
+        <a href="/tickets/{{ item.ticket_id }}" style="font-size: 1.15rem; font-weight: 700; color: var(--primary); text-decoration: none;">
+          {{ item.ticket_number }}: {{ item.title }}
+        </a>
+      </div>
+
+      <div style="margin-bottom: 8px;">
+        <strong>Resolution Summary:</strong>
+        <p style="margin-top: 2px; color: var(--text-main);">{{ item.summary }}</p>
+      </div>
+
+      {% if item.root_cause %}
+      <div style="margin-bottom: 8px;">
+        <strong>Root Cause:</strong>
+        <p style="margin-top: 2px; color: var(--text-muted);">{{ item.root_cause }}</p>
+      </div>
+      {% endif %}
+
+      <div style="margin-bottom: 12px; background: var(--bg-surface-alt); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        <strong style="display: block; margin-bottom: 4px;">Resolution Steps:</strong>
+        <pre style="white-space: pre-wrap; font-family: var(--font-sans); font-size: 0.95rem; line-height: 1.5;">{{ item.resolution_steps }}</pre>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px;">
+        <div>
+          Confirmed: <strong>{{ item.verification.replace('_', ' ').title() }}</strong> &bull; Resolved by {{ item.resolved_by_name }} &bull; {{ item.resolved_at.strftime('%Y-%m-%d') }}
+        </div>
+        <div>
+          {% for tag in item.tags %}
+          <span class="tag-badge">{{ tag }}</span>
+          {% endfor %}
+          <a href="/tickets/{{ item.ticket_id }}" class="btn btn-secondary btn-sm" style="margin-left: 8px;">Open Ticket &rarr;</a>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  {% else %}
+    <div class="card" style="text-align: center; padding: 30px;">
+      <p style="color: var(--text-muted);">No historical resolutions matched your keywords. Ensure tickets are resolved with the "Preserve as Reusable Knowledge" checkbox enabled.</p>
+    </div>
+  {% endif %}
+</section>
+{% else %}
+<div class="card" style="background: var(--bg-surface-alt);">
+  <h3>How Knowledge Preservation Works</h3>
+  <ul style="margin-left: 20px; line-height: 1.8; color: var(--text-muted);">
+    <li><strong>Every resolved ticket improves future support:</strong> When agents solve an issue and mark it as useful knowledge, structured root causes and steps are captured.</li>
+    <li><strong>Organization Isolated:</strong> All resolution evidence remains strictly confined to your organization. Tenant boundaries are never crossed.</li>
+    <li><strong>Bounded Retrieval:</strong> In future versions (v0.2+), an AI assistant will retrieve these exact resolution snippets to draft suggested answers for incoming tickets, citing the source ticket numbers.</li>
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
