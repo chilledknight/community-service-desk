@@ -24,7 +24,7 @@ Prepared for Community Software Registry (CSR) "I Already Have Software" intake:
 - **Software Name:** Community Service Desk
 - **Package Name:** `community_service_desk`
 - **Repository Slug:** `community-service-desk`
-- **Version:** `0.1.0`
+- **Version:** `0.1.1`
 - **Description:** A lightweight service-desk application for community organizations to create, assign, track and resolve support tickets while preserving useful resolution knowledge for future support.
 - **Intended Community:** Community organizations, schools, associations, nonprofits, small businesses and internal support teams.
 - **License:** AGPL-3.0-only

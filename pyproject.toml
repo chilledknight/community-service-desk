@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "community-service-desk"
-version = "0.1.0"
+version = "0.1.1"
 description = "A lightweight service-desk application for community organizations to create, assign, track and resolve support tickets while preserving useful resolution knowledge for future support."
 readme = "README.md"
 requires-python = ">=3.11"

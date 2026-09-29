@@ -5,4 +5,4 @@ assign, track and resolve support tickets while preserving useful resolution
 knowledge for future support.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

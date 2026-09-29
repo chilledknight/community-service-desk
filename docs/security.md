@@ -1,6 +1,6 @@
 # Community Service Desk - Security Architecture & Policy
 
-**Version:** 0.1.0  
+**Version:** 0.1.1  
 **License:** AGPL-3.0-only  
 
 ---

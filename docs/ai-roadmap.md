@@ -1,6 +1,6 @@
 # Community Service Desk - AI Integration Roadmap & Principles
 
-**Version:** 0.1.0  
+**Version:** 0.1.1  
 **Status:** Architectural Blueprint (v0.1 implements Phase 1 deterministic retrieval; no external model calls)
 
 ---

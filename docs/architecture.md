@@ -1,6 +1,6 @@
 # Community Service Desk - Architecture Specification
 
-**Version:** 0.1.0  
+**Version:** 0.1.1  
 **License:** AGPL-3.0-only  
 **Target Environment:** Python 3.14+, PostgreSQL 17+, FastAPI, SQLAlchemy 2.x
 
